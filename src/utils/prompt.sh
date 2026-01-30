@@ -1,55 +1,97 @@
 
-
-BLUE="\033[38;5;45m"
+SELECTED="\033[4;38;5;45m"
 RESET="\033[0m"
 
+
+
 print() {
-  printf '%s\n' "$text"
 
   for i in "${!options[@]}"; do
+    if [[ $i != $prevOption && $i != $currentOption ]] then continue; fi
 
-  local line=""
-    if [[ $currentOption == $i ]]; then line+=$BLUE; fi
-    line+="$((i+1)) - ${options[$i]}"
-if [[ $currentOption == $i ]]; then line+=$RESET; fi
-    printf "%b$line%b\n" ;
+    local line=$RESETs
+    if [[ $currentOption == $i ]]; then line+=$SELECTED; fi
+    line+="[$i] - ${options[$i]}"
+    if [[ $currentOption == $i ]]; then line+=$RESET; fi
+    echo -ne "\e[$(($i+2));1H">&2
+    printf "%b$line%b\n" >&2
   done
 }
 
+
 prompt() {
+  echo -ne "\e[?25l" >&2
+  trap 'echo -ne "\e[?25h" >&2' EXIT 
+
   local text="$1"
   shift 1
   local options=("$@")
   local currentOption=0
-  local nOfOptions=$((${#options[@]} - 1))
+  local nOfOptions=$((${#options[@]} -1))
   local currentOption=0
+  local prevOption=0
 
-  print
+  clear >&2
+  printf '%s\n' "$text" >&2
+  for i in "${!options[@]}"; do
+    local line=""
+    if [[ $currentOption == $i ]]; then line+=$SELECTED; fi
+    line+="[$i] - ${options[$i]}"
+    if [[ $currentOption == $i ]]; then line+=$RESET; fi
+    printf "%b$line%b\n" >&2
+  done
 
-  # echo "$text"
-  # for i in "${!options[@]}"; do
-  #   echo "${options[$i]}"
-  # done
-  
 
-  # for option in "${options[@]}"; do
+  moveUp() {
+    ((currentOption--))
+    if [[ $currentOption == -1 ]] then currentOption=$nOfOptions; fi
+  }
 
-  # done
+  moveDown() {
+    ((currentOption++))
+    if [[ $currentOption == $(($nOfOptions+1)) ]] then ((currentOption=0)) ; fi
+  }
 
-    # while true; do
-    # IFS= read -rsn1 -t 0.5 key < /dev/tty || key=''
 
-    # if [[ $key == $'\e' ]]; then
-    #     IFS= read -rsn2 -t 0.05 rest < /dev/tty || rest=''
-    #     key+="$rest"
-    # fi
+  while true; do
+    print
+    prevOption=$currentOption
 
-    # case "$key" in
-    #     $'\e[A'|$'\eOA') echo "Up" ;;
-    #     $'\e[B'|$'\eOB') echo "Down" ;;
-    #     $'\n'|$'\r') echo "Enter"; break ;;
-    #     '') continue ;; 
-    #     *) printf 'Got: %q\n' "$key" ;;
-    # esac
-  # done
+    read -rsN1 key 
+
+    if [[ $key == $'\e' ]]; then
+        read -rsN2 -t 0.05 rest || rest=''
+        key+="$rest"
+    fi
+
+    case "$key" in
+        $'\e[A'|$'\eOA')  
+          moveUp 
+          ;;
+        $'\e[B'|$'\eOB') 
+          moveDown
+          ;;
+        $'w') 
+          moveUp
+          ;;
+        $'s') 
+          moveDown 
+          ;;
+        $'\n'|$'\r')
+          break
+          ;;
+        '') 
+          continue
+          ;; 
+        *) 
+          if [[ "$key" =~ ^[0-9]+$ ]] && (( key >= 0 && key <= $nOfOptions )); then
+            currentOption=$key
+          fi
+          ;;
+    esac
+  done
+
+  echo -ne "\e[?25l" >&2
+  echo -ne "\e[$(($nOfOptions+3));1H">&2
+  echo $currentOption
 }
