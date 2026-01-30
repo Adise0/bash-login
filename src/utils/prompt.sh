@@ -3,22 +3,6 @@ SELECTED="\033[4;38;5;45m"
 RESET="\033[0m"
 
 
-
-print() {
-
-  for i in "${!options[@]}"; do
-    if [[ $i != $prevOption && $i != $currentOption ]] then continue; fi
-
-    local line=$RESETs
-    if [[ $currentOption == $i ]]; then line+=$SELECTED; fi
-    line+="[$i] - ${options[$i]}"
-    if [[ $currentOption == $i ]]; then line+=$RESET; fi
-    echo -ne "\e[$(($i+2));1H">&2
-    printf "%b$line%b\n" >&2
-  done
-}
-
-
 prompt() {
   echo -ne "\e[?25l" >&2
   trap 'echo -ne "\e[?25h" >&2' EXIT 
@@ -34,22 +18,34 @@ prompt() {
   clear >&2
   printf '%s\n' "$text" >&2
   for i in "${!options[@]}"; do
-    local line=""
+    local line="$RESET"
     if [[ $currentOption == $i ]]; then line+=$SELECTED; fi
     line+="[$i] - ${options[$i]}"
     if [[ $currentOption == $i ]]; then line+=$RESET; fi
     printf "%b$line%b\n" >&2
   done
+  
+  print() {
+    for i in "${!options[@]}"; do
+      if [[ $i != $prevOption && $i != $currentOption ]]; then continue; fi
 
+      local line=$RESET
+      if [[ $currentOption == $i ]]; then line+=$SELECTED; fi
+      line+="[$i] - ${options[$i]}"
+      if [[ $currentOption == $i ]]; then line+=$RESET; fi
+      echo -ne "\e[$(($i+2));1H">&2
+      printf "%b$line%b\n" >&2
+    done
+  }
 
   moveUp() {
     ((currentOption--))
-    if [[ $currentOption == -1 ]] then currentOption=$nOfOptions; fi
+    if [[ $currentOption == -1 ]]; then currentOption=$nOfOptions; fi
   }
 
   moveDown() {
     ((currentOption++))
-    if [[ $currentOption == $(($nOfOptions+1)) ]] then ((currentOption=0)) ; fi
+    if (($currentOption == $nOfOptions+1)); then ((currentOption=0)) ; fi
   }
 
 
@@ -91,7 +87,7 @@ prompt() {
     esac
   done
 
-  echo -ne "\e[?25l" >&2
+  echo -ne "\e[?25h" >&2
   echo -ne "\e[$(($nOfOptions+3));1H">&2
   echo $currentOption
 }
