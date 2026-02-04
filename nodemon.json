@@ -1,0 +1,9 @@
+{
+  "restartable": false,
+  "events": {
+    "start": "clear"
+  },
+  "watch": ["src"],
+  "ext": "sh",
+  "exec": "clear && bash ./src/main.sh"
+}
