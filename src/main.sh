@@ -1,7 +1,12 @@
 #!/bin/bash
 
 source "./src/utils/prompt.sh"
+source "./src/connection/client.sh"
+source "./src/connection/server.sh"
 
-result=$(prompt "Choose an option" "opt1" "opt2" "opt3")
+result=$(prompt "Choose an option" "Server" "Client")
 
-echo Result is $result
+case $result in
+0) startServer ;;
+1) startClient ;;
+esac
