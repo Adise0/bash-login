@@ -15,7 +15,7 @@ startClient() {
   exec {sock_out}>&"${NC[1]}"
 
   echo "Connected to $ip:$port" >&2
-  printf '%s\n' "HELLO_FROM_CLIENT" >&"$sock_out"
+  printf '%s\n' "HELLO" >&"$sock_out"
 
   while IFS= read -r msg <&"$sock_in"; do
     handleClientMessage "$msg"

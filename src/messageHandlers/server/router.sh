@@ -1,4 +1,5 @@
 handleServerMessage() {
-  local message=$1
-  echo "Message from client: $message" >&2
+  local client=$1
+  local message=$2
+  echo "Message from [$client]: $message" >&2
 }
