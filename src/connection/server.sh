@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 
-source "./src/connection/shared.sh"
+source "./src/messageHandlers/server/router.sh"
 
 startServer() {
+  clear
+  echo "Starting server...." >&2
+
   local port=5555
+
+  coproc NC (ncat -l "$port" --no-shutdown)
+
+  exec {sock_in}<&"${NC[0]}"
+  exec {sock_out}>&"${NC[1]}"
+
   echo "Listening on port $port" >&2
 
-  ncat -l "$port" --keep-open --no-shutdown 2>/dev/null |
-    while IFS= read -r msg; do
-      handleMessage "$msg"
-    done
+  while IFS= read -r msg <&"$sock_in"; do
+    handleServerMessage "$msg"
+    printf 'Bounce: %s\n' "$msg" >&"$sock_out"
+  done
 }

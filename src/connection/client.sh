@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
+source "./src/messageHandlers/client/router.sh"
+
 startClient() {
+  clear
 
   local ip=127.0.0.1
   local port=5555
+  echo "Starting client...." >&2
 
   coproc NC (ncat "$ip" "$port" --no-shutdown)
 
@@ -11,14 +15,13 @@ startClient() {
   exec {sock_out}>&"${NC[1]}"
 
   echo "Connected to $ip:$port" >&2
+  printf '%s\n' "HELLO_FROM_CLIENT" >&"$sock_out"
 
-  # ---- receive loop (background)
   while IFS= read -r msg <&"$sock_in"; do
-    handleMessage "$msg"
+    handleClientMessage "$msg"
   done &
   local recv_pid=$!
 
-  # ---- send loop (stdin)
   while IFS= read -r line; do
     printf '%s\n' "$line" >&"$sock_out"
   done
