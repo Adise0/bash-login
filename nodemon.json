@@ -1,4 +1,5 @@
 {
+  "restartable": false,
   "events": {
     "start": "clear"
   },
